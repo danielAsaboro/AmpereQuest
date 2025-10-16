@@ -1,0 +1,506 @@
+{
+  "address": "Ex4pz9FX9RQUHcSdb74MzTN4hpPFAHMKfqf3RtWcVHRc",
+  "metadata": {
+    "name": "virtual_plot",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "install_charger",
+      "docs": [
+        "Install a charger on owned plot"
+      ],
+      "discriminator": [
+        135,
+        164,
+        192,
+        103,
+        196,
+        99,
+        217,
+        117
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plot.plot_id",
+                "account": "VirtualPlot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "plot"
+          ]
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "charger_power_kw",
+          "type": "u16"
+        },
+        {
+          "name": "installation_cost",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "purchase_plot",
+      "docs": [
+        "Purchase a virtual plot"
+      ],
+      "discriminator": [
+        91,
+        90,
+        190,
+        43,
+        255,
+        46,
+        84,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "plot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "plot_id",
+          "type": "u32"
+        },
+        {
+          "name": "latitude",
+          "type": "i32"
+        },
+        {
+          "name": "longitude",
+          "type": "i32"
+        },
+        {
+          "name": "price_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "record_session",
+      "docs": [
+        "Record revenue from virtual charging session",
+        "SECURITY: Only the game engine authority can record sessions"
+      ],
+      "discriminator": [
+        101,
+        213,
+        185,
+        49,
+        190,
+        189,
+        113,
+        180
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plot.plot_id",
+                "account": "VirtualPlot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "docs": [
+            "Payer who uses the charging station and pays for the session"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "docs": [
+            "Only this PDA can authorize session recording to prevent revenue inflation"
+          ],
+          "signer": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  101,
+                  110,
+                  103,
+                  105,
+                  110,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "revenue_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "upgrade_charger",
+      "docs": [
+        "Upgrade existing charger"
+      ],
+      "discriminator": [
+        169,
+        189,
+        63,
+        238,
+        157,
+        218,
+        214,
+        228
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plot.plot_id",
+                "account": "VirtualPlot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "plot"
+          ]
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_power_kw",
+          "type": "u16"
+        },
+        {
+          "name": "upgrade_cost",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_revenue",
+      "docs": [
+        "Withdraw accumulated revenue"
+      ],
+      "discriminator": [
+        58,
+        241,
+        152,
+        184,
+        104,
+        150,
+        169,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plot.plot_id",
+                "account": "VirtualPlot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "plot"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "VirtualPlot",
+      "discriminator": [
+        112,
+        247,
+        47,
+        70,
+        219,
+        59,
+        181,
+        75
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidChargerPower",
+      "msg": "Invalid charger power. Must be 3, 7, 11, 22, or 30 kW"
+    },
+    {
+      "code": 6001,
+      "name": "NoChargerInstalled",
+      "msg": "No charger installed on this plot"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidUpgrade",
+      "msg": "Invalid upgrade: new power must be greater than current"
+    },
+    {
+      "code": 6003,
+      "name": "PlotNotOperational",
+      "msg": "Plot is not operational"
+    },
+    {
+      "code": 6004,
+      "name": "InsufficientRevenue",
+      "msg": "Insufficient revenue to withdraw"
+    },
+    {
+      "code": 6005,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6006,
+      "name": "Underflow",
+      "msg": "Arithmetic underflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "VirtualPlot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "plot_id",
+            "type": "u32"
+          },
+          {
+            "name": "latitude",
+            "type": "i32"
+          },
+          {
+            "name": "longitude",
+            "type": "i32"
+          },
+          {
+            "name": "purchase_price",
+            "type": "u64"
+          },
+          {
+            "name": "charger_power_kw",
+            "type": "u16"
+          },
+          {
+            "name": "total_revenue",
+            "type": "u64"
+          },
+          {
+            "name": "total_sessions",
+            "type": "u64"
+          },
+          {
+            "name": "is_operational",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

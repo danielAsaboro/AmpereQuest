@@ -1,0 +1,649 @@
+{
+  "address": "5emVuARWebNveyqe9ivrM24yhBMdLWJvq3qzYTDDd66u",
+  "metadata": {
+    "name": "charging_session",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "credit_points",
+      "docs": [
+        "Credit points to user (callable via CPI by authorized programs like marketplace)",
+        "SECURITY: Only authorized programs can call this to prevent arbitrary point minting"
+      ],
+      "discriminator": [
+        140,
+        43,
+        121,
+        246,
+        176,
+        80,
+        167,
+        176
+      ],
+      "accounts": [
+        {
+          "name": "user_account",
+          "writable": true
+        },
+        {
+          "name": "caller_authority",
+          "docs": [
+            "The calling program signs with this PDA to prove its identity"
+          ],
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "debit_points",
+      "docs": [
+        "Debit points from user (callable via CPI by authorized programs like marketplace)",
+        "SECURITY: Only authorized programs can call this to prevent unauthorized point burning"
+      ],
+      "discriminator": [
+        15,
+        153,
+        89,
+        226,
+        157,
+        112,
+        126,
+        126
+      ],
+      "accounts": [
+        {
+          "name": "user_account",
+          "writable": true
+        },
+        {
+          "name": "caller_authority",
+          "docs": [
+            "The calling program signs with this PDA to prove its identity"
+          ],
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "end_session",
+      "docs": [
+        "End charging session and mint points to user"
+      ],
+      "discriminator": [
+        11,
+        244,
+        61,
+        154,
+        212,
+        249,
+        15,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "session",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "session.user",
+                "account": "ChargingSession"
+              },
+              {
+                "kind": "account",
+                "path": "session.start_time",
+                "account": "ChargingSession"
+              },
+              {
+                "kind": "account",
+                "path": "session.nonce",
+                "account": "ChargingSession"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "session"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_user",
+      "docs": [
+        "Initialize user account"
+      ],
+      "discriminator": [
+        111,
+        17,
+        185,
+        250,
+        60,
+        122,
+        38,
+        254
+      ],
+      "accounts": [
+        {
+          "name": "user_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeem_voucher",
+      "docs": [
+        "Redeem a voucher from the marketplace",
+        "Creates a redemption record to prevent double-spending",
+        "SECURITY: Uses init constraint on redemption_record to prevent double redemption",
+        "The init will fail if a redemption record already exists for this voucher"
+      ],
+      "discriminator": [
+        50,
+        219,
+        8,
+        127,
+        45,
+        96,
+        161,
+        92
+      ],
+      "accounts": [
+        {
+          "name": "user_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "redemption_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  100,
+                  101,
+                  109,
+                  112,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "voucher"
+              }
+            ]
+          }
+        },
+        {
+          "name": "voucher"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "start_session",
+      "docs": [
+        "Initialize a new charging session",
+        "Uses timestamp + nonce to prevent PDA collisions if multiple sessions start in same second"
+      ],
+      "discriminator": [
+        23,
+        227,
+        111,
+        142,
+        212,
+        230,
+        3,
+        175
+      ],
+      "accounts": [
+        {
+          "name": "session",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "arg",
+                "path": "timestamp"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "charger_code",
+          "type": "string"
+        },
+        {
+          "name": "charger_power_kw",
+          "type": "u16"
+        },
+        {
+          "name": "pricing_per_kwh",
+          "type": "u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_session",
+      "docs": [
+        "Update session with energy consumed (called periodically during charging)"
+      ],
+      "discriminator": [
+        173,
+        25,
+        235,
+        79,
+        40,
+        217,
+        155,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "session",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "session.user",
+                "account": "ChargingSession"
+              },
+              {
+                "kind": "account",
+                "path": "session.start_time",
+                "account": "ChargingSession"
+              },
+              {
+                "kind": "account",
+                "path": "session.nonce",
+                "account": "ChargingSession"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "signer": true,
+          "relations": [
+            "session"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "energy_wh_increment",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ChargingSession",
+      "discriminator": [
+        167,
+        37,
+        9,
+        198,
+        108,
+        160,
+        43,
+        64
+      ]
+    },
+    {
+      "name": "UserAccount",
+      "discriminator": [
+        211,
+        33,
+        136,
+        16,
+        186,
+        110,
+        242,
+        127
+      ]
+    },
+    {
+      "name": "VoucherRedemption",
+      "discriminator": [
+        158,
+        68,
+        58,
+        94,
+        170,
+        144,
+        102,
+        66
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "SessionNotActive",
+      "msg": "Session is not active"
+    },
+    {
+      "code": 6001,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientPoints",
+      "msg": "Insufficient points"
+    },
+    {
+      "code": 6003,
+      "name": "Underflow",
+      "msg": "Arithmetic underflow"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidVoucherProgram",
+      "msg": "Invalid voucher program"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidVoucherData",
+      "msg": "Invalid voucher data"
+    },
+    {
+      "code": 6006,
+      "name": "UnauthorizedVoucher",
+      "msg": "Unauthorized voucher"
+    },
+    {
+      "code": 6007,
+      "name": "VoucherAlreadyRedeemed",
+      "msg": "Voucher already redeemed"
+    },
+    {
+      "code": 6008,
+      "name": "UnauthorizedCaller",
+      "msg": "Unauthorized caller - only whitelisted programs can modify points"
+    }
+  ],
+  "types": [
+    {
+      "name": "ChargingSession",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "charger_code",
+            "type": "string"
+          },
+          {
+            "name": "charger_power_kw",
+            "type": "u16"
+          },
+          {
+            "name": "pricing_per_kwh",
+            "type": "u64"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "end_time",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "energy_consumed_wh",
+            "type": "u64"
+          },
+          {
+            "name": "points_earned",
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_points",
+            "type": "u64"
+          },
+          {
+            "name": "available_points",
+            "type": "u64"
+          },
+          {
+            "name": "total_energy_kwh",
+            "type": "u64"
+          },
+          {
+            "name": "total_sessions",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VoucherRedemption",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "voucher",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "points_amount",
+            "type": "u64"
+          },
+          {
+            "name": "redeemed_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

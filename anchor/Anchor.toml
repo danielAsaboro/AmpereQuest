@@ -7,6 +7,9 @@ skip-lint = false
 
 [programs.localnet]
 basic = "JAVuBXeBZqXNtS73azhBDAoYaaAFfo4gWXoZe2e7Jf8H"
+charging_session = "5emVuARWebNveyqe9ivrM24yhBMdLWJvq3qzYTDDd66u"
+points_marketplace = "9PQHr2B1MoxNwyjwdvxZcc7VifqKsetsjvikGwxu2Eko"
+virtual_plot = "Ex4pz9FX9RQUHcSdb74MzTN4hpPFAHMKfqf3RtWcVHRc"
 
 [registry]
 url = "https://api.apr.dev"
