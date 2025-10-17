@@ -1,6 +1,7 @@
 'use client'
 
 import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { motion } from 'framer-motion'
 import { Map, Zap, TrendingUp, MapPin, Wallet, Plus, ArrowUpCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useVirtualPlotProgram, useVirtualPlotActions } from './virtual-plot-data-access'
 import { useState } from 'react'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 const CHARGER_POWERS = [3, 7, 11, 22, 30] as const
 const PLOT_PRICE = 0.1 * LAMPORTS_PER_SOL // 0.1 SOL per plot
@@ -18,9 +18,9 @@ const CHARGER_BASE_COST = 0.05 * LAMPORTS_PER_SOL // Base cost for charger insta
 export function EmpireFeature() {
   const { publicKey, connected } = useWallet()
   const { plots } = useVirtualPlotProgram()
-  const virtualPlotActions = publicKey
-    ? useVirtualPlotActions({ owner: publicKey })
-    : null
+  // Use placeholder key when wallet not connected (hook must always be called)
+  const placeholderKey = new PublicKey('11111111111111111111111111111111')
+  const virtualPlotActions = useVirtualPlotActions({ owner: publicKey || placeholderKey })
 
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [plotIdInput, setPlotIdInput] = useState('')
@@ -50,7 +50,7 @@ export function EmpireFeature() {
   }
 
   const handleInstallCharger = async (plotId: number) => {
-    if (!virtualPlotActions) return
+    if (!publicKey) return
 
     const cost = CHARGER_BASE_COST * (selectedPower / 3)
     await virtualPlotActions.installCharger.mutateAsync({
@@ -228,7 +228,7 @@ export function EmpireFeature() {
           {userPlots.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>You don't own any plots yet. Purchase one to get started!</p>
+              <p>You don&apos;t own any plots yet. Purchase one to get started!</p>
             </div>
           ) : (
             <div className="space-y-4">

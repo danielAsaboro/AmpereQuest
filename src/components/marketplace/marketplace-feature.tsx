@@ -24,21 +24,23 @@ export function MarketplaceFeature() {
   const [listingAmount, setListingAmount] = useState('')
   const [listingPrice, setListingPrice] = useState('')
 
-  const userHooks = publicKey ? useMarketplaceUser({ owner: publicKey }) : null
+  // Use a placeholder key when wallet not connected (hook must always be called)
+  const placeholderKey = new PublicKey('11111111111111111111111111111111')
+  const userHooks = useMarketplaceUser({ owner: publicKey || placeholderKey })
 
   const activeListings = listings.data?.filter((listing) => listing.account.isActive) || []
   const marketplace = marketplaceQuery.data
-  const userAccount = userHooks?.userAccountQuery.data
+  const userAccount = publicKey ? userHooks.userAccountQuery.data : null
 
   const handleBuyFromMarketplace = async () => {
-    if (!userHooks || !buyAmount) return
+    if (!publicKey || !buyAmount) return
     await userHooks.buyFromMarketplace.mutateAsync(parseInt(buyAmount))
     setBuyAmount('')
     setShowBuyModal(false)
   }
 
   const handleCreateListing = async () => {
-    if (!userHooks || !listingAmount || !listingPrice) return
+    if (!publicKey || !listingAmount || !listingPrice) return
     await userHooks.createListing.mutateAsync({
       pointsAmount: parseInt(listingAmount),
       pricePerPoint: parseInt(listingPrice),
@@ -49,7 +51,7 @@ export function MarketplaceFeature() {
   }
 
   const handleBuyFromListing = async (listingPubkey: PublicKey, sellerPubkey: PublicKey) => {
-    if (!userHooks) return
+    if (!publicKey) return
     await userHooks.buyFromListing.mutateAsync({
       listingPda: listingPubkey,
       sellerPubkey: sellerPubkey,
@@ -57,7 +59,7 @@ export function MarketplaceFeature() {
   }
 
   const handleCancelListing = async (listingPubkey: PublicKey) => {
-    if (!userHooks) return
+    if (!publicKey) return
     await userHooks.cancelListing.mutateAsync(listingPubkey)
   }
 
@@ -341,7 +343,9 @@ export function MarketplaceFeature() {
           pointsAmount={parseInt(buyAmount)}
           pricePerPointLamports={marketplace.pricePerPointLamports.toNumber()}
           onSuccess={() => {
-            userHooks?.userAccountQuery.refetch()
+            if (publicKey) {
+              userHooks.userAccountQuery.refetch()
+            }
           }}
         />
       )}

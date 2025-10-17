@@ -2,20 +2,28 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Activity, TrendingUp, Users, Zap, Wallet, Plus } from 'lucide-react'
+import { Activity, TrendingUp, Users, Zap, Wallet, Plus, Map, List } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ChargingSimulator, type ChargingSession, getAllChargePoints } from '@/lib/simulation'
 import { ChargingSessionCard } from './charging-session-card'
+import { ChargingMap } from './charging-map'
+import { UserStatsCard } from './user-stats-card'
+import { AchievementBadges } from './achievement-badges'
+import { EnergyCharts } from './energy-charts'
+import { Leaderboard } from './leaderboard'
 import { useChargingSessionProgram, useUserAccount } from '../charging-session/charging-session-data-access'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
 import { useState as useStateHook } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function PulseFeature() {
   const { publicKey, connected } = useWallet()
   const { accounts } = useChargingSessionProgram()
-  const userHooks = publicKey ? useUserAccount({ owner: publicKey }) : null
+  // Use placeholder key when wallet not connected (hook must always be called)
+  const placeholderKey = new PublicKey('11111111111111111111111111111111')
+  const userHooks = useUserAccount({ owner: publicKey || placeholderKey })
 
   const [sessions, setSessions] = useState<ChargingSession[]>([])
   const [stats, setStats] = useState({
@@ -25,6 +33,7 @@ export function PulseFeature() {
   })
   const simulatorRef = useRef<ChargingSimulator | null>(null)
   const [mode, setMode] = useState<'blockchain' | 'demo'>('blockchain')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map')
   const [showStartSession, setShowStartSession] = useState(false)
 
   // Convert blockchain sessions to display format
@@ -143,21 +152,41 @@ export function PulseFeature() {
             Live feed of charging sessions across the DeCharge network
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant={mode === 'blockchain' ? 'default' : 'outline'}
-            onClick={() => setMode('blockchain')}
-            size="sm"
-          >
-            Blockchain
-          </Button>
-          <Button
-            variant={mode === 'demo' ? 'default' : 'outline'}
-            onClick={() => setMode('demo')}
-            size="sm"
-          >
-            Demo
-          </Button>
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2">
+            <Button
+              variant={mode === 'blockchain' ? 'default' : 'outline'}
+              onClick={() => setMode('blockchain')}
+              size="sm"
+            >
+              Blockchain
+            </Button>
+            <Button
+              variant={mode === 'demo' ? 'default' : 'outline'}
+              onClick={() => setMode('demo')}
+              size="sm"
+            >
+              Demo
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              onClick={() => setViewMode('map')}
+              size="sm"
+            >
+              <Map className="w-4 h-4 mr-1" />
+              Map
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              size="sm"
+            >
+              <List className="w-4 h-4 mr-1" />
+              List
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -202,6 +231,14 @@ export function PulseFeature() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* User Stats and Achievements - Show for demo or when sessions exist */}
+      {(mode === 'demo' || sessions.length > 0) && (
+        <>
+          <UserStatsCard sessions={sessions} userAccount={userAccount} />
+          <AchievementBadges sessions={sessions} />
+        </>
       )}
 
       {/* Stats */}
@@ -268,22 +305,44 @@ export function PulseFeature() {
           <CardDescription>Real-time updates from the network</CardDescription>
         </CardHeader>
         <CardContent>
-          {sessions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Waiting for charging sessions to begin...</p>
+          {viewMode === 'map' ? (
+            <div className="h-[500px] -mx-6 -mb-6">
+              <ChargingMap sessions={sessions} showChargePoints={true} showSessions={true} />
             </div>
           ) : (
-            <div className="space-y-3">
-              <AnimatePresence>
-                {sessions.map((session, index) => (
-                  <ChargingSessionCard key={session.id} session={session} index={index} />
-                ))}
-              </AnimatePresence>
-            </div>
+            <>
+              {sessions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Waiting for charging sessions to begin...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <AnimatePresence>
+                    {sessions.map((session, index) => (
+                      <ChargingSessionCard key={session.id} session={session} index={index} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Analytics Section - Show for demo or when sessions exist */}
+      {(mode === 'demo' || sessions.length > 0) && (
+        <>
+          <div className="pt-4">
+            <h2 className="text-2xl font-bold mb-4">Analytics</h2>
+            <EnergyCharts sessions={sessions} />
+          </div>
+
+          <div className="pt-4">
+            <Leaderboard sessions={sessions} />
+          </div>
+        </>
+      )}
 
       {/* Info Card */}
       <Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border-green-200 dark:border-green-800">

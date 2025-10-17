@@ -1,6 +1,6 @@
 'use client'
 
-import { getPointsMarketplaceProgram, getPointsMarketplaceProgramId } from '@project/anchor'
+import { getPointsMarketplaceProgram, getPointsMarketplaceProgramId, getChargingSessionProgramId, getChargingSessionProgram } from '@project/anchor'
 import { useConnection } from '@solana/wallet-adapter-react'
 import { Cluster, PublicKey, SystemProgram } from '@solana/web3.js'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -69,9 +69,7 @@ export function useMarketplace() {
       return program.methods
         .initializeMarketplace()
         .accounts({
-          marketplace: marketplacePda,
           authority,
-          systemProgram: SystemProgram.programId,
         })
         .rpc()
     },
@@ -98,21 +96,24 @@ export function useMarketplaceUser({ owner }: { owner: PublicKey }) {
   const { marketplacePda } = useMarketplace()
   const transactionToast = useTransactionToast()
   const queryClient = useQueryClient()
+  const provider = useAnchorProvider()
 
-  // User account PDA (same as charging session)
+  // User account PDA from charging_session program (not marketplace program!)
+  const chargingSessionProgramId = useMemo(() => getChargingSessionProgramId(cluster.network as Cluster), [cluster])
+  const chargingSessionProgram = useMemo(() => getChargingSessionProgram(provider, chargingSessionProgramId), [provider, chargingSessionProgramId])
   const userAccountPda = useMemo(() => {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from('user'), owner.toBuffer()],
-      program.programId
+      chargingSessionProgramId
     )
     return pda
-  }, [owner, program.programId])
+  }, [owner, chargingSessionProgramId])
 
   const userAccountQuery = useQuery({
     queryKey: ['marketplace-user-account', 'fetch', { cluster, owner: owner.toString() }],
     queryFn: async () => {
       try {
-        return await program.account.userAccount.fetch(userAccountPda)
+        return await chargingSessionProgram.account.userAccount.fetch(userAccountPda)
       } catch {
         return null
       }
@@ -141,10 +142,7 @@ export function useMarketplaceUser({ owner }: { owner: PublicKey }) {
       return program.methods
         .createListing(new BN(pointsAmount), new BN(pricePerPoint), new BN(timestamp))
         .accounts({
-          listing: listingPda,
-          sellerAccount: userAccountPda,
           seller: owner,
-          systemProgram: SystemProgram.programId,
         })
         .rpc()
     },
@@ -166,13 +164,20 @@ export function useMarketplaceUser({ owner }: { owner: PublicKey }) {
   const buyFromMarketplace = useMutation({
     mutationKey: ['marketplace', 'buy-from-marketplace', { cluster }],
     mutationFn: async (pointsAmount: number) => {
+      const timestamp = Math.floor(Date.now() / 1000)
+      const [voucherPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('voucher'),
+          owner.toBuffer(),
+          Buffer.from(new BN(timestamp).toArray('le', 8)),
+        ],
+        program.programId
+      )
+
       return program.methods
-        .buyFromMarketplace(new BN(pointsAmount))
+        .buyFromMarketplace(new BN(pointsAmount), new BN(timestamp))
         .accounts({
-          marketplace: marketplacePda,
-          buyerAccount: userAccountPda,
           buyer: owner,
-          systemProgram: SystemProgram.programId,
         })
         .rpc()
     },
@@ -195,14 +200,21 @@ export function useMarketplaceUser({ owner }: { owner: PublicKey }) {
       listingPda: PublicKey
       sellerPubkey: PublicKey
     }) => {
+      const timestamp = Math.floor(Date.now() / 1000)
+      const [voucherPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('voucher'),
+          owner.toBuffer(),
+          Buffer.from(new BN(timestamp).toArray('le', 8)),
+        ],
+        program.programId
+      )
+
       return program.methods
-        .buyFromListing()
+        .buyFromListing(new BN(timestamp))
         .accounts({
-          listing: listingPda,
-          buyerAccount: userAccountPda,
           buyer: owner,
           seller: sellerPubkey,
-          systemProgram: SystemProgram.programId,
         })
         .rpc()
     },
@@ -227,8 +239,6 @@ export function useMarketplaceUser({ owner }: { owner: PublicKey }) {
       return program.methods
         .cancelListing()
         .accounts({
-          listing: listingPda,
-          sellerAccount: userAccountPda,
           seller: owner,
         })
         .rpc()

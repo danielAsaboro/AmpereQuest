@@ -135,7 +135,6 @@ export function useUserAccount({ owner }: { owner: PublicKey }) {
       return program.methods
         .initializeUser()
         .accounts({
-          userAccount: userAccountPda,
           authority: owner,
         })
         .rpc()
@@ -162,19 +161,20 @@ export function useUserAccount({ owner }: { owner: PublicKey }) {
       pricingPerKwh: number
     }) => {
       const timestamp = Math.floor(Date.now() / 1000)
+      const nonce = Math.floor(Math.random() * 1000000) // Random nonce to avoid collisions
       const [sessionPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from('session'),
           owner.toBuffer(),
           Buffer.from(new BN(timestamp).toArray('le', 8)),
+          Buffer.from(new BN(nonce).toArray('le', 4)),
         ],
         program.programId
       )
 
       return program.methods
-        .startSession(chargerCode, chargerPowerKw, new BN(pricingPerKwh), new BN(timestamp))
+        .startSession(chargerCode, chargerPowerKw, new BN(pricingPerKwh), new BN(timestamp), nonce)
         .accounts({
-          session: sessionPda,
           user: owner,
         })
         .rpc()

@@ -1,5 +1,5 @@
 // Simulation engine for EV charging sessions
-import chargePointsData from '../../resources/charge_point_sample.json'
+import chargePointsData from '../data/charge_point_sample.json'
 
 export interface ChargePoint {
   code: string
