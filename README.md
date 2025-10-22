@@ -4,6 +4,18 @@
 
 AmpereQuest is a hybrid Solana application built for the [DeCharge "Anons with Amperes" hackathon](https://earn.superteam.fun/listing/anons-with-amperes/). It combines **real-time charging session visualization** with a **gamified virtual charging empire** to create an engaging on-chain economy for both EV drivers and Web3 users.
 
+## ⚠️ Demo Status
+
+**This is a functional prototype demonstrating blockchain architecture for EV charging integration:**
+
+- ✅ **Smart Contracts**: Fully implemented and tested on Solana (localnet)
+- ✅ **Point Economy**: Real on-chain point minting and trading
+- ⚡ **Charging Data**: Currently using simulated sessions for demo purposes
+- 🎮 **Virtual Empire**: Fully functional on-chain plot ownership and revenue system
+- 💰 **Marketplace**: Voucher-based point trading system
+
+**Production Deployment:** Would require oracle integration with DeCharge API for verified real-world charging session data.
+
 ## 🎯 Hackathon Tracks
 
 This project addresses **both** the main track and bonus track:
@@ -17,11 +29,13 @@ This project addresses **both** the main track and bonus track:
 - ✅ Solana Pay integration for instant microtransactions
 
 ### Bonus Track: Virtual Charging World ("The Empire")
-- ✅ NFT-based virtual plot ownership
+- ✅ PDA-based virtual plot ownership (on-chain, non-transferable)
 - ✅ Install and upgrade chargers (3.3kW → 30kW)
 - ✅ Virtual EV traffic simulation
 - ✅ Revenue generation from virtual sessions
 - ✅ Strategic gameplay with location and pricing
+
+> **Note:** Plots are currently stored as PDA accounts. Future enhancement: Convert to SPL tokens for marketplace transferability.
 
 ## 🏗️ Architecture
 
@@ -74,9 +88,10 @@ NFT-based virtual charging plot system.
 
 #### Pages
 - **`/`** - Home page with feature overview
-- **`/pulse`** - Real-time charging feed with live updates
-- **`/empire`** - Virtual charging network builder (WIP)
-- **`/marketplace`** - Points trading platform (WIP)
+- **`/pulse`** - Real-time charging feed with live updates & leaderboards
+- **`/empire`** - Virtual charging network builder with revenue analytics
+- **`/marketplace`** - Points trading platform with Solana Pay
+- **`/analytics`** - Comprehensive network statistics and insights
 - **`/account`** - User profile and stats
 
 #### Key Components
@@ -93,27 +108,43 @@ NFT-based virtual charging plot system.
 - Rust & Anchor CLI
 - Solana CLI
 
-### Installation
+### Quick Start
 
 ```bash
-# Clone the repository
-git clone <your-repo>
-cd AmpereQuest
-
 # Install dependencies
 pnpm install
 
+# Start everything: build, deploy, and run!
+pnpm demo
+```
+
+This will automatically:
+1. ✅ Build all Anchor programs
+2. ✅ Start Solana test validator
+3. ✅ Deploy programs to localnet
+4. ✅ Start Next.js development server
+
+Open http://localhost:3000 and you're ready to go!
+
+**Press Ctrl+C to stop all services**
+
+### Manual Setup (Alternative)
+
+```bash
 # Build Anchor programs
 pnpm anchor-build
 
-# Start local validator (optional)
-pnpm anchor-localnet
+# Start local validator
+pnpm validator
+
+# Deploy programs
+cd anchor && anchor deploy
 
 # Start development server
 pnpm dev
 ```
 
-The app will be available at `http://localhost:3000` (or another port if 3000 is in use).
+The app will be available at `http://localhost:3000`
 
 ## 🎮 How It Works
 
@@ -206,27 +237,144 @@ AmpereQuest/
     └── charge_point_sample.json
 ```
 
-## 🔮 Future Roadmap
+## 🔮 Production Deployment Architecture
 
-### Phase 1: MVP (Current)
-- ✅ Real-time charging feed
+### Oracle Integration for Real Charging Data
+
+**Current State**: Demo uses simulated charging sessions
+**Production Goal**: Verify real charging sessions from DeCharge hardware
+
+#### Architecture Overview
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                   PRODUCTION FLOW                             │
+└──────────────────────────────────────────────────────────────┘
+
+1. EV Driver starts charging at DeCharge station
+   ├── Hardware records: energy consumed, timestamp, location
+   └── Hardware signs data with private key (Ed25519)
+
+2. Data sent to Switchboard Oracle Network
+   ├── Oracle validates hardware signature
+   ├── Verifies location within 100m radius (GPS proof)
+   ├── Checks rate limits (max sessions per user per day)
+   └── Submits verified data to Solana
+
+3. Solana Smart Contract (charging_session)
+   ├── Receives oracle-verified data
+   ├── Validates oracle authority signature
+   ├── Mints points based on energy consumed
+   └── Updates user account on-chain
+
+4. User receives points
+   ├── Can sell in marketplace
+   ├── Can use in virtual empire
+   └── Full on-chain transparency
+```
+
+#### Security Layers
+
+1. **Hardware Signature** (Layer 1)
+   - Each DeCharge station has unique Ed25519 keypair
+   - All session data signed by hardware
+   - Prevents fake session submissions
+
+2. **Oracle Validation** (Layer 2)
+   - Switchboard oracle verifies hardware signature
+   - Location proof: GPS coordinates within 100m
+   - Rate limiting: prevents spam/abuse
+   - Multi-oracle consensus (3+ oracles)
+
+3. **On-Chain Verification** (Layer 3)
+   - Smart contract checks oracle authority
+   - Validates session parameters (reasonable energy, timing)
+   - Anti-replay attack measures
+   - Immutable audit trail
+
+#### Implementation Steps
+
+1. **Switchboard Oracle Setup** (Week 1-2)
+   ```typescript
+   // Oracle job definition
+   {
+     "name": "DeCharge Session Validator",
+     "tasks": [
+       {
+         "httpTask": {
+           "url": "https://api.decharge.io/sessions/verify",
+           "method": "POST"
+         }
+       },
+       {
+         "jsonParseTask": {
+           "path": "$.verified"
+         }
+       }
+     ]
+   }
+   ```
+
+2. **Hardware Integration** (Week 2-3)
+   - Install signing module on DeCharge stations
+   - Configure API endpoints
+   - Test signature verification
+
+3. **Smart Contract Updates** (Week 3-4)
+   ```rust
+   // Add oracle authority validation
+   pub fn end_session_with_oracle(
+       ctx: Context<EndSession>,
+       oracle_signature: [u8; 64],
+       energy_consumed_wh: u64,
+   ) -> Result<()> {
+       // Verify oracle signature
+       require!(
+           verify_oracle_signature(&oracle_signature),
+           ErrorCode::InvalidOracle
+       );
+
+       // Continue with point minting...
+   }
+   ```
+
+4. **Testing & Deployment** (Week 4-6)
+   - Devnet testing with simulated oracle
+   - Testnet with real DeCharge stations
+   - Security audit
+   - Mainnet deployment
+
+#### Cost Analysis
+
+- **Switchboard Oracle**: ~$0.001 per session verification
+- **Solana Transaction**: ~$0.00025 per session
+- **Total per session**: < $0.002
+
+At 10,000 sessions/day: **~$20/day operating cost**
+
+### Future Roadmap
+
+#### Phase 1: MVP (Current) ✅
+- ✅ Real-time charging feed (simulated)
 - ✅ Points system with smart contracts
-- ✅ Basic marketplace structure
-- ⏳ Virtual plot system UI
+- ✅ Full marketplace with Solana Pay
+- ✅ Virtual plot system with revenue tracking
+- ✅ Analytics dashboard
+- ✅ Leaderboards and achievements
 
-### Phase 2: Enhanced Features
-- [ ] Full marketplace implementation with Solana Pay
-- [ ] Interactive map for virtual plots
-- [ ] Virtual traffic AI
-- [ ] User profiles with achievements
-- [ ] Leaderboards
+#### Phase 2: Production Integration (4-6 weeks)
+- [ ] Switchboard oracle integration
+- [ ] DeCharge hardware API connection
+- [ ] Security audit
+- [ ] Devnet → Testnet → Mainnet deployment
+- [ ] Mobile app (React Native)
 
-### Phase 3: Production
-- [ ] Integration with real DeCharge API
-- [ ] Mobile app
-- [ ] Advanced analytics dashboard
-- [ ] Social features (following, sharing)
-- [ ] Governance token
+#### Phase 3: Enhanced Features (3-6 months)
+- [ ] Advanced analytics & ML predictions
+- [ ] Social features (following, sharing, teams)
+- [ ] Achievement NFTs with rarity
+- [ ] Governance token & DAO
+- [ ] Multi-network support (Polygon, Arbitrum)
 
 ## 🏆 Hackathon Submission
 

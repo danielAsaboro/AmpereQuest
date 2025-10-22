@@ -1,4 +1,5 @@
 [toolchain]
+anchor_version = "0.31.1"
 package_manager = "yarn"
 
 [features]
@@ -10,6 +11,7 @@ basic = "JAVuBXeBZqXNtS73azhBDAoYaaAFfo4gWXoZe2e7Jf8H"
 charging_session = "5emVuARWebNveyqe9ivrM24yhBMdLWJvq3qzYTDDd66u"
 points_marketplace = "9PQHr2B1MoxNwyjwdvxZcc7VifqKsetsjvikGwxu2Eko"
 virtual_plot = "Ex4pz9FX9RQUHcSdb74MzTN4hpPFAHMKfqf3RtWcVHRc"
+game_engine = "GaMeENgNEwq9D7UJt7Fzv4LptHKCBNkzxqpGMVJ7KQRK"
 
 [registry]
 url = "https://api.apr.dev"
@@ -19,4 +21,4 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "../node_modules/.bin/jest --preset ts-jest"
+test = "../node_modules/.bin/jest"

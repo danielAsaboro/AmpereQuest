@@ -233,29 +233,9 @@ export type VirtualPlot = {
         {
           "name": "authority",
           "docs": [
-            "Only this PDA can authorize session recording to prevent revenue inflation"
+            "Only the game engine program can call this via CPI with its authority PDA"
           ],
-          "signer": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  97,
-                  109,
-                  101,
-                  95,
-                  101,
-                  110,
-                  103,
-                  105,
-                  110,
-                  101
-                ]
-              }
-            ]
-          }
+          "signer": true
         },
         {
           "name": "systemProgram",

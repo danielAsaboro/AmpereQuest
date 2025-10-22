@@ -4,7 +4,8 @@ import { Basic } from '../target/types/basic'
 
 describe('basic', () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env())
+  const provider = anchor.AnchorProvider.env()
+  anchor.setProvider(provider)
 
   const program = anchor.workspace.Basic as Program<Basic>
 

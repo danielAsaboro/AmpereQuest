@@ -109,8 +109,9 @@ describe('virtual_plot', () => {
   })
 
   it.skip('records a virtual charging session', async () => {
-    // For testing, skip the authority check by using payer as authority
-    // In production, this would be a protected game engine service
+    // Requires authority PDA derived from b"game_engine" seed to sign
+    // PDAs cannot sign transactions directly - only programs can via CPI
+    // Needs actual game engine service calling this via CPI
     const revenueLamports = 1_000_000 // 0.001 SOL revenue
 
     await program.methods
@@ -128,7 +129,9 @@ describe('virtual_plot', () => {
   })
 
   it.skip('records multiple sessions', async () => {
-    // For testing, skip the authority check by using payer as authority
+    // Requires authority PDA derived from b"game_engine" seed to sign
+    // PDAs cannot sign transactions directly - only programs can via CPI
+    // Needs actual game engine service calling this via CPI
     const revenueLamports = 2_000_000 // 0.002 SOL
 
     await program.methods

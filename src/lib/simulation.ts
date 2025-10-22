@@ -234,3 +234,158 @@ export class ChargingSimulator {
 export const getAllChargePoints = (): ChargePoint[] => {
   return chargePointsData.charge_points as ChargePoint[]
 }
+
+// Validation functions for production use
+
+/**
+ * Validate charger code exists in database
+ * Production: Would check against DeCharge API
+ */
+export const validateChargerCode = (chargerCode: string): boolean => {
+  const chargePoints = getAllChargePoints()
+  return chargePoints.some((cp) => cp.code === chargerCode)
+}
+
+/**
+ * Get charger details by code
+ */
+export const getChargerByCode = (chargerCode: string): ChargePoint | null => {
+  const chargePoints = getAllChargePoints()
+  return chargePoints.find((cp) => cp.code === chargerCode) || null
+}
+
+/**
+ * Validate GPS coordinates are within reasonable bounds
+ * Latitude: -90 to +90 (scaled by 1e6: -90000000 to +90000000)
+ * Longitude: -180 to +180 (scaled by 1e6: -180000000 to +180000000)
+ */
+export const validateCoordinates = (latitude: number, longitude: number): boolean => {
+  // Check if coordinates are in valid range (scaled by 1e6)
+  const isLatValid = latitude >= -90_000_000 && latitude <= 90_000_000
+  const isLngValid = longitude >= -180_000_000 && longitude <= 180_000_000
+  return isLatValid && isLngValid
+}
+
+/**
+ * Calculate distance between two GPS coordinates (Haversine formula)
+ * Returns distance in meters
+ */
+export const calculateDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
+  // Convert from scaled integers to degrees
+  const lat1Deg = lat1 / 1_000_000
+  const lng1Deg = lng1 / 1_000_000
+  const lat2Deg = lat2 / 1_000_000
+  const lng2Deg = lng2 / 1_000_000
+
+  const R = 6371e3 // Earth radius in meters
+  const φ1 = (lat1Deg * Math.PI) / 180
+  const φ2 = (lat2Deg * Math.PI) / 180
+  const Δφ = ((lat2Deg - lat1Deg) * Math.PI) / 180
+  const Δλ = ((lng2Deg - lng1Deg) * Math.PI) / 180
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
+
+/**
+ * Validate location is near a registered charger
+ * Production: Would verify GPS proof from hardware
+ */
+export const validateLocationNearCharger = (
+  chargerCode: string,
+  latitude: number,
+  longitude: number,
+  maxDistanceMeters: number = 100
+): boolean => {
+  const charger = getChargerByCode(chargerCode)
+  if (!charger) return false
+
+  const chargerLat = Math.round(charger.location.latitude * 1_000_000)
+  const chargerLng = Math.round(charger.location.longitude * 1_000_000)
+
+  const distance = calculateDistance(latitude, longitude, chargerLat, chargerLng)
+  return distance <= maxDistanceMeters
+}
+
+/**
+ * Validate charger power rating
+ */
+export const validateChargerPower = (chargerCode: string, powerKw: number): boolean => {
+  const charger = getChargerByCode(chargerCode)
+  if (!charger) return false
+
+  // Check if any connector matches the specified power
+  return charger.connectors.some((conn) => conn.power_kw === powerKw)
+}
+
+/**
+ * Get available power levels for a charger
+ */
+export const getAvailablePowerLevels = (chargerCode: string): number[] => {
+  const charger = getChargerByCode(chargerCode)
+  if (!charger) return []
+
+  return charger.connectors.map((conn) => conn.power_kw)
+}
+
+/**
+ * Validation result interface
+ */
+export interface ValidationResult {
+  isValid: boolean
+  errors: string[]
+}
+
+/**
+ * Comprehensive session validation
+ * Production: Would be called by oracle before approving session
+ */
+export const validateSessionStart = (params: {
+  chargerCode: string
+  powerKw: number
+  latitude?: number
+  longitude?: number
+}): ValidationResult => {
+  const errors: string[] = []
+
+  // Validate charger exists
+  if (!validateChargerCode(params.chargerCode)) {
+    errors.push(`Charger code '${params.chargerCode}' not found in database`)
+  }
+
+  // Validate power rating
+  if (!validateChargerPower(params.chargerCode, params.powerKw)) {
+    const available = getAvailablePowerLevels(params.chargerCode)
+    errors.push(
+      `Invalid power rating ${params.powerKw}kW for charger. Available: ${available.join(', ')}kW`
+    )
+  }
+
+  // Validate coordinates if provided
+  if (params.latitude !== undefined && params.longitude !== undefined) {
+    if (!validateCoordinates(params.latitude, params.longitude)) {
+      errors.push(`Invalid GPS coordinates: (${params.latitude}, ${params.longitude})`)
+    } else {
+      // Validate location is near charger
+      if (!validateLocationNearCharger(params.chargerCode, params.latitude, params.longitude)) {
+        errors.push(
+          `Location (${params.latitude}, ${params.longitude}) is not within 100m of charger ${params.chargerCode}`
+        )
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  }
+}

@@ -107,6 +107,7 @@ export function useVirtualPlotActions({ owner, treasury }: { owner: PublicKey; t
       return program.methods
         .installCharger(chargerPowerKw, new BN(installationCost))
         .accounts({
+          plot: plotPda,
           owner: owner,
         })
         .rpc()
@@ -142,6 +143,7 @@ export function useVirtualPlotActions({ owner, treasury }: { owner: PublicKey; t
       return program.methods
         .upgradeCharger(newPowerKw, new BN(upgradeCost))
         .accounts({
+          plot: plotPda,
           owner: owner,
         })
         .rpc()
@@ -169,6 +171,7 @@ export function useVirtualPlotActions({ owner, treasury }: { owner: PublicKey; t
       return program.methods
         .withdrawRevenue(new BN(amount))
         .accounts({
+          plot: plotPda,
           owner: owner,
         })
         .rpc()

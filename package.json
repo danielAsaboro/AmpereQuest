@@ -1,6 +1,9 @@
 {
   "name": "AmpereQuest",
   "scripts": {
+    "demo": "./scripts/start-demo.sh",
+    "demo:quick": "./scripts/start-demo.sh",
+    "demo:init": "cd anchor && tsx scripts/initialize-demo.ts",
     "anchor": "cd anchor && anchor",
     "anchor-build": "cd anchor && anchor build",
     "anchor-localnet": "cd anchor && anchor localnet",
@@ -11,7 +14,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "validator": "solana-test-validator --ledger test-ledger --reset",
+    "validator:stop": "pkill -f solana-test-validator || true"
   },
   "displayName": "Web3js Basic",
   "usecase": "Legacy",
@@ -33,6 +38,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "@solana/pay": "^0.2.6",
     "@solana/spl-token": "0.4.14",
     "@solana/wallet-adapter-base": "0.9.27",
     "@solana/wallet-adapter-react": "0.15.39",
@@ -55,7 +61,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@solana/pay": "^0.2.6",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/bn.js": "^5.2.0",
     "@types/chai": "^5.2.3",
@@ -76,6 +81,8 @@
     "tailwindcss": "^4.1.13",
     "ts-jest": "^29.4.3",
     "ts-mocha": "^11.1.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.2"
   }
 }

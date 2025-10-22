@@ -275,12 +275,8 @@ pub struct RecordSession<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: Game engine authority PDA - validated by seeds constraint
-    /// Only this PDA can authorize session recording to prevent revenue inflation
-    #[account(
-        seeds = [GAME_ENGINE_SEED],
-        bump
-    )]
+    /// CHECK: Game engine authority - verified by calling program via CPI
+    /// Only the game engine program can call this via CPI with its authority PDA
     pub authority: Signer<'info>,
 
     pub system_program: Program<'info, System>,

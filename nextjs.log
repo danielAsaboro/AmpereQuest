@@ -1,0 +1,24 @@
+
+> AmpereQuest@0.0.0 dev /Users/user/development/solana/hackathon/amperes/AmpereQuest
+> next dev --turbopack
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/user/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/user/development/solana/hackathon/amperes/AmpereQuest/pnpm-lock.yaml
+
+   ▲ Next.js 15.5.3 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://127.0.2.2:3000
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 1172ms
+ ○ Compiling /marketplace ...
+ ✓ Compiled /marketplace in 10s
+ GET /empire 200 in 7202ms
+ GET /pulse 200 in 6026ms
+ GET /marketplace 200 in 10584ms

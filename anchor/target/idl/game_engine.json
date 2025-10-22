@@ -1,0 +1,159 @@
+{
+  "address": "FaDfrmu8UUewvRvkVygu3sHtrF9LkCLbSd8avWuK1Myk",
+  "metadata": {
+    "name": "game_engine",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Game engine for recording virtual charging sessions"
+  },
+  "instructions": [
+    {
+      "name": "initialize_game_engine",
+      "docs": [
+        "Initialize the game engine authority PDA",
+        "This creates the authority PDA that will sign CPI calls to virtual_plot"
+      ],
+      "discriminator": [
+        101,
+        20,
+        30,
+        179,
+        90,
+        99,
+        223,
+        118
+      ],
+      "accounts": [
+        {
+          "name": "game_engine",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  101,
+                  110,
+                  103,
+                  105,
+                  110,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_session",
+      "docs": [
+        "Record a virtual charging session on a plot via CPI",
+        "This is called to record virtual sessions with revenue generated"
+      ],
+      "discriminator": [
+        101,
+        213,
+        185,
+        49,
+        190,
+        189,
+        113,
+        180
+      ],
+      "accounts": [
+        {
+          "name": "plot",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "docs": [
+            "The payer/user who is \"charging\" virtually"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  101,
+                  110,
+                  103,
+                  105,
+                  110,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "virtual_plot_program",
+          "docs": [
+            "The virtual_plot program to call via CPI"
+          ],
+          "address": "Ex4pz9FX9RQUHcSdb74MzTN4hpPFAHMKfqf3RtWcVHRc"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "revenue_lamports",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GameEngineAuthority",
+      "discriminator": [
+        57,
+        19,
+        221,
+        208,
+        119,
+        91,
+        78,
+        70
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "GameEngineAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    }
+  ]
+}

@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ChargingSimulator, type ChargingSession, getAllChargePoints } from '@/lib/simulation'
 import { ChargingSessionCard } from './charging-session-card'
-import { ChargingMap } from './charging-map'
 import { UserStatsCard } from './user-stats-card'
 import { AchievementBadges } from './achievement-badges'
 import { EnergyCharts } from './energy-charts'
@@ -17,6 +16,12 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
 import { useState as useStateHook } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Leaflet-based map to avoid SSR issues
+const ChargingMap = dynamic(() => import('./charging-map').then((mod) => mod.ChargingMap), {
+  ssr: false,
+})
 
 export function PulseFeature() {
   const { publicKey, connected } = useWallet()
@@ -189,6 +194,17 @@ export function PulseFeature() {
           </div>
         </div>
       </div>
+
+      {/* Demo Mode Indicator */}
+      {mode === 'demo' && (
+        <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+          <Zap className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+            <strong>Demo Mode:</strong> Viewing simulated charging sessions for visualization.
+            Switch to <strong>Blockchain</strong> mode to interact with real on-chain data.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* User initialization alert */}
       {connected && !userAccount && mode === 'blockchain' && (

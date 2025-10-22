@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Activity, Map, ShoppingCart, ArrowRight, Zap, TrendingUp, Cpu } from 'lucide-react'
+import { Activity, Map, ShoppingCart, ArrowRight, Zap, TrendingUp, Cpu, BarChart3 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -29,6 +29,13 @@ export default function Home() {
       href: '/marketplace',
       color: 'from-purple-500 to-pink-600',
     },
+    {
+      icon: BarChart3,
+      title: 'Analytics',
+      description: 'Explore comprehensive network statistics and insights',
+      href: '/analytics',
+      color: 'from-orange-500 to-red-600',
+    },
   ]
 
   return (
@@ -40,9 +47,15 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
-          <Zap className="w-4 h-4" />
-          Powered by Solana
+        <div className="flex flex-col items-center gap-2">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+            <Zap className="w-4 h-4" />
+            Powered by Solana
+          </div>
+          <div className="inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-full text-xs font-medium border border-yellow-300 dark:border-yellow-700">
+            <Cpu className="w-3 h-3" />
+            Prototype Demo • Using simulated charging data
+          </div>
         </div>
         <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
           AmpereQuest
@@ -53,7 +66,7 @@ export default function Home() {
       </motion.div>
 
       {/* Feature Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {features.map((feature, index) => {
           const Icon = feature.icon
           return (

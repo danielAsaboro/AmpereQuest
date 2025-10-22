@@ -3,13 +3,26 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { motion } from 'framer-motion'
-import { Map, Zap, TrendingUp, MapPin, Wallet, Plus, ArrowUpCircle } from 'lucide-react'
+import { Map, Zap, TrendingUp, MapPin, Wallet, Plus, ArrowUpCircle, Navigation } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useVirtualPlotProgram, useVirtualPlotActions } from './virtual-plot-data-access'
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { RevenueChart, RevenueOverTimeChart } from './revenue-chart'
+
+// Dynamically import Leaflet-based components to avoid SSR issues
+const PlotSelectionMap = dynamic(
+  () => import('./plot-selection-map').then((mod) => mod.PlotSelectionMap),
+  { ssr: false }
+)
+
+const PlotManagementMap = dynamic(
+  () => import('./plot-management-map').then((mod) => mod.PlotManagementMap),
+  { ssr: false }
+)
 
 const CHARGER_POWERS = [3, 7, 11, 22, 30] as const
 const PLOT_PRICE = 0.1 * LAMPORTS_PER_SOL // 0.1 SOL per plot
@@ -23,31 +36,71 @@ export function EmpireFeature() {
   const virtualPlotActions = useVirtualPlotActions({ owner: publicKey || placeholderKey })
 
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
-  const [plotIdInput, setPlotIdInput] = useState('')
   const [latitudeInput, setLatitudeInput] = useState('')
   const [longitudeInput, setLongitudeInput] = useState('')
   const [selectedPlotForCharger, setSelectedPlotForCharger] = useState<number | null>(null)
   const [selectedPower, setSelectedPower] = useState<number>(3)
+  const [useMapSelection, setUseMapSelection] = useState(true)
+  const [plotsView, setPlotsView] = useState<'list' | 'map'>('list')
 
   const userPlots = plots.data?.filter((plot) => publicKey && plot.account.owner.equals(publicKey)) || []
   const totalRevenue = userPlots.reduce((sum, plot) => sum + plot.account.totalRevenue.toNumber(), 0)
   const totalSessions = userPlots.reduce((sum, plot) => sum + plot.account.totalSessions.toNumber(), 0)
 
+  // Generate a unique random u32 plot ID
+  const generateUniquePlotId = (): number => {
+    const existingIds = new Set(plots.data?.map((p) => p.account.plotId) || [])
+    const maxU32 = 4294967295 // Max value for u32
+
+    let plotId: number
+    let attempts = 0
+    const maxAttempts = 100
+
+    do {
+      // Generate random u32
+      plotId = Math.floor(Math.random() * maxU32)
+      attempts++
+    } while (existingIds.has(plotId) && attempts < maxAttempts)
+
+    // Fallback: if random fails, use sequential
+    if (existingIds.has(plotId)) {
+      plotId = 1
+      while (existingIds.has(plotId)) {
+        plotId++
+      }
+    }
+
+    return plotId
+  }
+
   const handlePurchasePlot = async () => {
-    if (!virtualPlotActions || !plotIdInput || !latitudeInput || !longitudeInput) return
+    if (!virtualPlotActions || !latitudeInput || !longitudeInput) return
+
+    const plotId = generateUniquePlotId()
 
     await virtualPlotActions.purchasePlot.mutateAsync({
-      plotId: parseInt(plotIdInput),
+      plotId,
       latitude: parseFloat(latitudeInput),
       longitude: parseFloat(longitudeInput),
       priceLamports: PLOT_PRICE,
     })
 
-    setPlotIdInput('')
     setLatitudeInput('')
     setLongitudeInput('')
     setShowPurchaseModal(false)
   }
+
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setLatitudeInput(lat.toFixed(6))
+    setLongitudeInput(lng.toFixed(6))
+  }
+
+  // Transform user plots for map display
+  const existingPlotsForMap = userPlots.map((plot) => ({
+    plotId: plot.account.plotId,
+    latitude: plot.account.latitude / 1_000_000,
+    longitude: plot.account.longitude / 1_000_000,
+  }))
 
   const handleInstallCharger = async (plotId: number) => {
     if (!publicKey) return
@@ -151,6 +204,14 @@ export function EmpireFeature() {
         </motion.div>
       </div>
 
+      {/* Revenue Charts - Show if user has plots */}
+      {userPlots.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <RevenueChart plots={userPlots} />
+          <RevenueOverTimeChart plots={userPlots} />
+        </div>
+      )}
+
       {/* Purchase Plot */}
       <Card>
         <CardHeader>
@@ -160,47 +221,93 @@ export function EmpireFeature() {
         <CardContent>
           {showPurchaseModal ? (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="plotId">Plot ID (unique number)</Label>
-                <Input
-                  id="plotId"
-                  type="number"
-                  value={plotIdInput}
-                  onChange={(e) => setPlotIdInput(e.target.value)}
-                  placeholder="e.g. 1, 2, 3..."
-                />
+              {/* Info about auto-generated ID */}
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  📍 Select a location on the map or enter coordinates manually. A unique Plot ID will be generated automatically.
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="latitude">Latitude</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="0.000001"
-                    value={latitudeInput}
-                    onChange={(e) => setLatitudeInput(e.target.value)}
-                    placeholder="e.g. 40.7128"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="longitude">Longitude</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="0.000001"
-                    value={longitudeInput}
-                    onChange={(e) => setLongitudeInput(e.target.value)}
-                    placeholder="e.g. -74.0060"
-                  />
-                </div>
+
+              {/* Toggle between map and manual input */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={useMapSelection ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUseMapSelection(true)}
+                >
+                  <Map className="w-4 h-4 mr-2" />
+                  Map Selection
+                </Button>
+                <Button
+                  variant={!useMapSelection ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUseMapSelection(false)}
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Manual Input
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Cost: {(PLOT_PRICE / LAMPORTS_PER_SOL).toFixed(2)} SOL
-              </p>
+
+              {/* Map or Manual Input */}
+              {useMapSelection ? (
+                <div className="space-y-4">
+                  <PlotSelectionMap
+                    selectedLat={latitudeInput ? parseFloat(latitudeInput) : null}
+                    selectedLng={longitudeInput ? parseFloat(longitudeInput) : null}
+                    onLocationSelect={handleLocationSelect}
+                    existingPlots={existingPlotsForMap}
+                  />
+                  {latitudeInput && longitudeInput && (
+                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Selected Coordinates:
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        Latitude: {parseFloat(latitudeInput).toFixed(6)} | Longitude: {parseFloat(longitudeInput).toFixed(6)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="latitude">Latitude</Label>
+                    <Input
+                      id="latitude"
+                      type="number"
+                      step="0.000001"
+                      value={latitudeInput}
+                      onChange={(e) => setLatitudeInput(e.target.value)}
+                      placeholder="e.g. 40.7128"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="longitude">Longitude</Label>
+                    <Input
+                      id="longitude"
+                      type="number"
+                      step="0.000001"
+                      value={longitudeInput}
+                      onChange={(e) => setLongitudeInput(e.target.value)}
+                      placeholder="e.g. -74.0060"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                  Purchase Cost
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {(PLOT_PRICE / LAMPORTS_PER_SOL).toFixed(2)} SOL
+                </p>
+              </div>
               <div className="flex gap-2">
                 <Button
                   onClick={handlePurchasePlot}
-                  disabled={!plotIdInput || !latitudeInput || !longitudeInput}
+                  disabled={!latitudeInput || !longitudeInput}
+                  className="flex-1"
                 >
                   Purchase Plot
                 </Button>
@@ -221,8 +328,34 @@ export function EmpireFeature() {
       {/* Your Plots */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Plots</CardTitle>
-          <CardDescription>Manage your virtual charging network</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Your Plots</CardTitle>
+              <CardDescription>Manage your virtual charging network</CardDescription>
+            </div>
+            {/* View Toggle Tabs */}
+            {userPlots.length > 0 && (
+              <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                <Button
+                  size="sm"
+                  variant={plotsView === 'list' ? 'default' : 'ghost'}
+                  onClick={() => setPlotsView('list')}
+                  className="text-xs"
+                >
+                  List View
+                </Button>
+                <Button
+                  size="sm"
+                  variant={plotsView === 'map' ? 'default' : 'ghost'}
+                  onClick={() => setPlotsView('map')}
+                  className="text-xs"
+                >
+                  <Map className="w-3 h-3 mr-1" />
+                  Map View
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {userPlots.length === 0 ? (
@@ -230,6 +363,22 @@ export function EmpireFeature() {
               <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>You don&apos;t own any plots yet. Purchase one to get started!</p>
             </div>
+          ) : plotsView === 'map' ? (
+            <PlotManagementMap
+              plots={userPlots.map((plot) => ({
+                publicKey: plot.publicKey.toString(),
+                account: plot.account,
+              }))}
+              selectedPlotForCharger={selectedPlotForCharger}
+              setSelectedPlotForCharger={setSelectedPlotForCharger}
+              selectedPower={selectedPower}
+              setSelectedPower={setSelectedPower}
+              onInstallCharger={handleInstallCharger}
+              onUpgradeCharger={handleUpgradeCharger}
+              onWithdrawRevenue={(plotId, amount) =>
+                virtualPlotActions?.withdrawRevenue.mutateAsync({ plotId, amount })
+              }
+            />
           ) : (
             <div className="space-y-4">
               {userPlots.map((plot) => {
